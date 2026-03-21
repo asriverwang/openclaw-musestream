@@ -1,0 +1,18 @@
+# Environment — never commit API keys
+.env
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Generated music output
+*.ogg
+*.mp3
+*.flac
+*.m4a
+log.jsonl
+
+# Logs
+*.log
