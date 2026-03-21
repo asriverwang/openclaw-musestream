@@ -52,19 +52,19 @@ Your agent will configure `.env`, install dependencies, and start the server.
 
 Once the server is up, your agent will confirm with something like:
 
-> Both keys loaded. Server's up on **http://localhost:5001** with MiniMax context prompts enabled. Want me to generate some music?
+> Both keys loaded. Server's up on **http://localhost:5000** with MiniMax context prompts enabled. Want me to generate some music?
 
 > [!NOTE]
-> The port may differ from `5001` — your agent picks an available port to avoid conflicts with other services already running on your machine.
+> The port may differ from `5000` — your agent picks an available port to avoid conflicts with other services already running on your machine.
 
 Try:
 
-> Generate music about 'A rock song about turtles flying'
+> Generate music about "A rock song about turtles flying"
 
 Your agent will return a player link — click it and enjoy!
 
 > [!TIP]
-> - Browse and listen to all previously generated songs at **http://localhost:5001** (no path suffix needed). Streamed songs are saved to `~/Music/MuseStream` by default.
+> - Browse and listen to all previously generated songs at **http://localhost:5000** (no path suffix needed). Streamed songs are saved to `~/Music/MuseStream` by default.
 > - Replace `<your_LLM>` with your actual LLM provider (MiniMax, OpenAI, etc.).
 > - Never commit API keys to version control.
 > - See **`SKILL.md`** for the full agent endpoint reference.
