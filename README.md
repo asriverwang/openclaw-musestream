@@ -9,6 +9,8 @@ AI music generation and streaming server. Describe a mood or context — get a c
 ## Features
 
 - **Continuous streaming player** — Agent sends user a URL; browser streams AI-generated music song after song with no interruption
+- **Auto-queue** — Automatically requests the next song after 120 seconds of playback while the browser window stays active; click "Stop Stream" or close the window to stop queuing and save your Sonauto credits
+- **Shareable links** — Player URLs can be shared externally; expose the server via a reverse proxy (e.g., Nginx, Caddy) or a tunnel (e.g., ngrok, Cloudflare Tunnel) with HTTPS and authentication to keep your stream secure
 - **Context-aware prompts** — Converts real-world context (weather, mood, activity, traffic) into music generation prompts via MiniMax M2.7 or Claude Haiku, with a rule-based fallback
 - **Persistent library** — All generated songs are saved locally with metadata (title, tags, lyrics) and browsable via a built-in player
 - **Mobile context UI** — Form at `/context-ui` for sharing context from any device
@@ -16,7 +18,52 @@ AI music generation and streaming server. Describe a mood or context — get a c
 
 ---
 
-## Setup
+## OpenClaw Quick Start
+
+If you have an OpenClaw Agent, it can set up and run MuseStream for you end-to-end:
+
+**1. Clone the repo**
+
+```bash
+git clone <repo-url> ~/.openclaw/workspace/
+```
+
+**2. Have your agent read the docs**
+
+> Read ~/.openclaw/workspace/openclaw-musestream/\*.md
+
+**3. Ask your agent to build the service**
+
+> I'd like to build the MuseStream service. Tell me how to get the Sonauto API key. I'm using LLM \<your_LLM\> (e.g., MiniMax).
+
+Your agent will guide you through obtaining the necessary API keys.
+
+**4. Give your agent the keys**
+
+> My Sonauto API key: xxxxxxx; my LLM API key: yyyy
+
+Your agent will configure `.env`, install dependencies, and start the server.
+
+**5. Generate music**
+
+Once the server is up, your agent will confirm with something like:
+
+> Both keys loaded. Server's up on **http://localhost:5001** with MiniMax context prompts enabled. Want me to generate some music?
+
+Try:
+
+> Generate music about 'A rock song about turtles flying'
+
+Your agent will return a player link — click it and enjoy!
+
+> [!TIP]
+> - Replace `<your_LLM>` with your actual LLM provider (MiniMax, OpenAI, etc.).
+> - Never commit API keys to version control.
+> - See **`SKILL.md`** for the full agent endpoint reference.
+
+---
+
+## Manual Setup
 
 ### 1. Get a Sonauto API key
 Register at **https://sonauto.ai** and copy your API key.
@@ -38,7 +85,7 @@ pip install -r requirements.txt
 # or: python3 musestream_server.py
 ```
 
-Server runs on **http://localhost:5000** by default.
+Server runs on **http://localhost:5000** by default (configurable via `MUSESTREAM_PORT`).
 
 ---
 
@@ -115,12 +162,6 @@ Add an entry to `PROVIDERS` in `musestream_server.py`:
 ```
 
 Then add a branch in `start_generation()` for the provider's request format, set `MUSIC_PROVIDER=udio`, and restart.
-
----
-
-## OpenClaw Integration
-
-See **`SKILL.md`** for the agent reference — all endpoints, examples, and setup steps written for a fresh agent with no prior context.
 
 ---
 
