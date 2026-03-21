@@ -16,6 +16,9 @@ AI music generation and streaming server. Describe a mood or context — get a c
 - **Mobile context UI** — Form at `/context-ui` for sharing context from any device
 - **Background save on stop** — Clicking Stop finishes saving the current song before ending
 
+> [!CAUTION]
+> Remember to click **Stop Stream** or close the browser window when you're done listening. The auto-queue will keep requesting new songs every 120 seconds, which consumes your Sonauto credits.
+
 ---
 
 ## OpenClaw Quick Start
