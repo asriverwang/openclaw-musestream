@@ -15,6 +15,7 @@ AI music generation and streaming server. Describe a mood or context — get a c
 - **Persistent library** — All generated songs are saved locally with metadata (title, tags, lyrics) and browsable via a built-in player
 - **Mobile context UI** — Form at `/context-ui` for sharing context from any device
 - **Background save on stop** — Clicking Stop finishes saving the current song before ending
+- **Messenger bot integration** — Connect MuseStream to your messaging bots (Telegram, Discord, Slack, etc.) so you can request AI music streams directly from a chat message and receive a playable link in reply
 
 > [!CAUTION]
 > Remember to click **Stop Stream** or close the browser window when you're done listening. The auto-queue will keep requesting new songs every 120 seconds, which consumes your Sonauto credits.
@@ -53,6 +54,9 @@ Once the server is up, your agent will confirm with something like:
 
 > Both keys loaded. Server's up on **http://localhost:5001** with MiniMax context prompts enabled. Want me to generate some music?
 
+> [!NOTE]
+> The port may differ from `5001` — your agent picks an available port to avoid conflicts with other services already running on your machine.
+
 Try:
 
 > Generate music about 'A rock song about turtles flying'
@@ -64,6 +68,28 @@ Your agent will return a player link — click it and enjoy!
 > - Replace `<your_LLM>` with your actual LLM provider (MiniMax, OpenAI, etc.).
 > - Never commit API keys to version control.
 > - See **`SKILL.md`** for the full agent endpoint reference.
+
+**6. Share a player URL externally**
+
+By default, all player URLs use `localhost` and are only reachable on your machine. To send a link someone else can open, ask your agent:
+
+> Replace `localhost` with my external IP address in the player URL so I can share it.
+
+Your agent will substitute the host and return a link like:
+```
+http://203.0.113.42:5000/player?s=abc12345
+```
+
+> [!WARNING]
+> **Be careful — exposing MuseStream to the internet opens your server to anyone who discovers the port.** They can trigger music generation, consume your API quota, and browse your saved library. Only use this feature on trusted networks and with the precautions below.
+
+Before exposing externally, at minimum:
+
+- **Firewall** — restrict port 5000 to known IPs ([ufw guide](https://help.ubuntu.com/community/UFW), [iptables](https://wiki.archlinux.org/title/iptables))
+- **Secret token** — set `MUSESTREAM_TOKEN` in `.env`; ask your agent to require `?token=<secret>` on all requests
+- **Rate limiting** — ask your agent to add [Flask-Limiter](https://flask-limiter.readthedocs.io/) to `/generate` and `/start`
+- **TLS proxy** — put [Caddy](https://caddyserver.com/docs/quick-starts/reverse-proxy) or [nginx](https://nginx.org/en/docs/beginners_guide.html) in front; never expose Flask's dev server directly
+- **Avoid public/shared networks** without the above in place
 
 ---
 
