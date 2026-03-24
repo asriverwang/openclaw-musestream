@@ -2,6 +2,26 @@
 
 AI music generation and streaming. Give the user a shareable player URL — music generates and plays continuously in their browser. All songs are saved to a local library.
 
+**Provider-agnostic** — Sonauto is the default. Adding new music generation APIs requires only a config entry.
+
+---
+
+## Features
+
+- **Continuous streaming player** — Agent sends user a URL; browser streams AI-generated music song after song with no interruption
+- **Auto-queue** — Automatically requests the next song after 120 seconds of playback while the browser window stays active; click "Stop Stream" or close the window to stop queuing and save your Sonauto credits
+- **Shareable links** — Player URLs can be shared externally; expose the server via a reverse proxy (e.g., Nginx, Caddy) or a tunnel (e.g., ngrok, Cloudflare Tunnel) with HTTPS and authentication to keep your stream secure
+- **Context-aware prompts** — Converts real-world context (weather, mood, activity, traffic) into music generation prompts via MiniMax M2.7 or Claude Haiku, with a rule-based fallback
+- **Persistent library** — All generated songs are saved locally with metadata (title, tags, lyrics) and browsable via a built-in player
+- **Mobile context UI** — Form at `/context-ui` for sharing context from any device
+- **Background save on stop** — Clicking Stop finishes saving the current song before ending
+- **Messenger bot integration** — Connect MuseStream to your messaging bots (Telegram, Discord, Slack, etc.) so you can request AI music streams directly from a chat message and receive a playable link in reply
+
+> [!CAUTION]
+> Remember to click **Stop Stream** or close the browser window when you're done listening. The auto-queue will keep requesting new songs every 120 seconds, which consumes your Sonauto credits.
+
+---
+
 ## Quick start for agent
 
 ### 1. Check if server is running
@@ -85,14 +105,6 @@ Current song finishes saving before stopping.
 ---
 
 ## Setup (first time)
-
-### 0. Install MuseStream
-```bash
-git clone https://github.com/asriverwang/openclaw-musestream ~/.openclaw/skills/openclaw-musestream
-cd ~/.openclaw/skills/openclaw-musestream
-```
-
-All subsequent commands assume MuseStream is located at `~/.openclaw/skills/openclaw-musestream`.
 
 ### 1. Get API keys
 
