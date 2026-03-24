@@ -44,7 +44,9 @@ cp .env.example .env
 Set the key in `.env`:
 ```
 SONAUTO_API_KEY=<user's key>
+MUSESTREAM_OUTPUT_DIR=<user's preferred path>
 ```
+Ask the user where they want generated songs saved. If they don't specify, remind them the default is `~/Music/MuseStream`.
 
 ### 3. Install dependencies
 ```bash
