@@ -5,13 +5,12 @@ MuseStream — AI Music Generation & Streaming Server
 - Agent creates a shareable session URL via GET /start?prompt=...
 - User opens the URL — prompt is hidden, auto-streams music continuously
 - Saves completed songs + metadata to OUTPUT_DIR
-- Context-aware prompts: weather, mood, activity → music description via LLM
+- Context-aware prompts: weather, mood, activity → music description via rule-based engine
+  (agent should use its own LLM to refine prompts before calling /start)
 
 Environment variables:
   MUSIC_PROVIDER          — "sonauto" (default) or any registered provider key
   SONAUTO_API_KEY         — API key for Sonauto (https://sonauto.ai)
-  ANTHROPIC_API_KEY       — Optional: Claude Haiku for context prompts
-  MINIMAX_API_KEY         — Optional: MiniMax M2.7 for context prompts (preferred)
   MUSESTREAM_OUTPUT_DIR   — Where to save generated songs (default ~/Music/MuseStream)
   MUSESTREAM_PORT         — Server port (default 5000)
 """
@@ -24,9 +23,6 @@ import time
 import requests
 from datetime import datetime
 from flask import Flask, Response, request, jsonify, stream_with_context
-
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-MINIMAX_API_KEY   = os.environ.get("MINIMAX_API_KEY", "")
 
 app = Flask(__name__)
 
@@ -476,63 +472,6 @@ def _build_context_lines(ctx: dict) -> list:
     if ctx.get("notes"):       lines.append(f"Notes: {ctx['notes']}")
     return lines
 
-CONTEXT_SYSTEM = (
-    "You write short music generation prompts (1–2 sentences, 10–25 words) for an AI music system. "
-    "The prompt must describe genre, mood, energy, and sonic texture. "
-    "Do NOT mention names of real artists or songs. "
-    "Output only the prompt text, no explanation."
-)
-
-
-def _context_to_prompt_minimax(ctx: dict) -> str:
-    """Use MiniMax M2.7 to synthesize context into a music generation prompt."""
-    lines = _build_context_lines(ctx)
-    user = "Generate a music prompt for this context:\n" + "\n".join(lines)
-    resp = requests.post(
-        "https://api.minimaxi.chat/v1/chat/completions",
-        headers={"Authorization": f"Bearer {MINIMAX_API_KEY}", "Content-Type": "application/json"},
-        json={
-            "model": "MiniMax-M2.7",
-            "messages": [
-                {"role": "system", "content": CONTEXT_SYSTEM},
-                {"role": "user",   "content": user},
-            ],
-            "max_tokens": 128,
-            "temperature": 0.7,
-        },
-        timeout=30,
-    )
-    resp.raise_for_status()
-    text = resp.json()["choices"][0]["message"]["content"].strip()
-    # Strip <think> blocks if present
-    import re
-    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
-    return text
-
-
-def _context_to_prompt_haiku(ctx: dict) -> str:
-    """Use Claude Haiku to synthesize context into a music generation prompt."""
-    lines = _build_context_lines(ctx)
-    user = "Generate a music prompt for this context:\n" + "\n".join(lines)
-    resp = requests.post(
-        "https://api.anthropic.com/v1/messages",
-        headers={
-            "x-api-key": ANTHROPIC_API_KEY,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-        },
-        json={
-            "model": "claude-haiku-4-5-20251001",
-            "max_tokens": 128,
-            "system": CONTEXT_SYSTEM,
-            "messages": [{"role": "user", "content": user}],
-        },
-        timeout=20,
-    )
-    resp.raise_for_status()
-    return resp.json()["content"][0]["text"].strip()
-
-
 def _context_to_prompt_rules(ctx: dict) -> str:
     """Fallback rule-based prompt builder (no API key needed)."""
     parts = []
@@ -600,17 +539,7 @@ def _context_to_prompt_rules(ctx: dict) -> str:
 
 
 def build_context_prompt(ctx: dict) -> str:
-    # Prefer MiniMax M2.7 → Claude Haiku → rule-based fallback
-    if MINIMAX_API_KEY:
-        try:
-            return _context_to_prompt_minimax(ctx)
-        except Exception as e:
-            print(f"MiniMax prompt generation failed ({e}), trying Haiku")
-    if ANTHROPIC_API_KEY:
-        try:
-            return _context_to_prompt_haiku(ctx)
-        except Exception as e:
-            print(f"Haiku prompt generation failed ({e}), using rules fallback")
+    """Build a music prompt from context using rule-based engine."""
     return _context_to_prompt_rules(ctx)
 
 

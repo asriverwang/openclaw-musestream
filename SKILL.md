@@ -11,7 +11,7 @@ AI music generation and streaming. Give the user a shareable player URL — musi
 - **Continuous streaming player** — Agent sends user a URL; browser streams AI-generated music song after song with no interruption
 - **Auto-queue** — Automatically requests the next song after 120 seconds of playback while the browser window stays active; click "Stop Stream" or close the window to stop queuing and save your Sonauto credits
 - **Shareable links** — Player URLs can be shared externally; expose the server via a reverse proxy (e.g., Nginx, Caddy) or a tunnel (e.g., ngrok, Cloudflare Tunnel) with HTTPS and authentication to keep your stream secure
-- **Context-aware prompts** — Converts real-world context (weather, mood, activity, traffic) into music generation prompts via MiniMax M2.7 or Claude Haiku, with a rule-based fallback
+- **Context-aware prompts** — The agent uses its own LLM to interpret user intent and real-world context (weather, mood, activity, location, traffic) into effective music generation prompts; the server also provides a rule-based fallback via `/api/context`
 - **Persistent library** — All generated songs are saved locally with metadata (title, tags, lyrics) and browsable via a built-in player
 - **Mobile context UI** — Form at `/context-ui` for sharing context from any device
 - **Background save on stop** — Clicking Stop finishes saving the current song before ending
@@ -19,6 +19,54 @@ AI music generation and streaming. Give the user a shareable player URL — musi
 
 > [!CAUTION]
 > Remember to click **Stop Stream** or close the browser window when you're done listening. The auto-queue will keep requesting new songs every 120 seconds, which consumes your Sonauto credits.
+
+---
+
+## Setup for Agent (first time)
+
+### 0. Clone the repo
+```bash
+git clone https://github.com/asriverwang/openclaw-musestream.git ~/.openclaw/skills/openclaw-musestream
+```
+
+All subsequent commands assume MuseStream is located at `~/.openclaw/skills/openclaw-musestream`. Adjust paths if you cloned it elsewhere.
+
+### 1. Get Sonauto API key
+
+Guide the user to sign up at **https://sonauto.ai** and copy their API key.
+
+### 2. Configure environment
+
+Once the user provides their key:
+```bash
+cp .env.example .env
+```
+Set the key in `.env`:
+```
+SONAUTO_API_KEY=<user's key>
+```
+
+### 3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Start the server
+```bash
+source .env && ./restart_musestream.sh
+# Server at http://localhost:5000
+```
+
+The port is configurable via `MUSESTREAM_PORT`. The agent should pick an available port to avoid conflicts.
+
+### Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `MUSIC_PROVIDER` | `sonauto` | Active provider |
+| `SONAUTO_API_KEY` | — | **Required** — get at https://sonauto.ai |
+| `MUSESTREAM_OUTPUT_DIR` | `~/Music/MuseStream` | Where songs are saved |
+| `MUSESTREAM_PORT` | `5000` | Server port |
 
 ---
 
@@ -44,14 +92,25 @@ GET http://localhost:5000/start?prompt=<url-encoded description>
 ```
 Returns `{ "url": "http://localhost:5000/player?s=<key>", "key": "...", "prompt": "..." }`
 
+**Important: The agent must interpret and refine the user's prompt before calling `/start`.** The server passes the prompt directly to Sonauto — it does not rewrite it. If the user says something non-musical (e.g., "a rock song about turtles flying", "music for a rainy afternoon"), the agent should use its own LLM to convert it into an effective music generation prompt describing artist, genre, era, mood, energy, usage context, and sonic texture.
+
 Send the `url` to the user. They open it in a browser — music streams automatically.
 
-**Prompt tips:** describe genre, mood, energy, texture. No real artist or song names.
-- `"upbeat indie rock with jangly guitars, morning energy"`
-- `"dark ambient electronic, late night focus, minimal percussion"`
-- `"smooth jazz piano trio, warm and intimate, chill evening"`
+**Prompt guidelines for the agent:**
+- If the prompt includes artist names, genres, or musical descriptors → pass through or improve slightly
+- Describe genre, era, mood, energy, usage, texture. No real song names.
+- Non-musical input → interpret and rewrite (e.g., "turtles flying" → `"energetic rock with soaring melodies, playful and whimsical, bright guitar riffs"`)
+- Already-musical input → pass through or improve slightly
+- Examples of good prompts:
+  - `"upbeat indie rock with jangly guitars, morning energy"`
+  - `"dark ambient electronic, late night focus, minimal percussion"`
+  - `"smooth jazz piano trio, warm and intimate, chill evening"`
 
 ### 4. Generate from user context
+
+**Preferred approach:** The agent should gather context from the user (time, weather, mood, activity, etc.), use its own LLM to synthesize a music prompt, and call `/start?prompt=...` directly.
+
+**Fallback:** The server provides a rule-based context-to-prompt endpoint:
 ```
 POST http://localhost:5000/api/context
 Content-Type: application/json
@@ -66,9 +125,9 @@ Content-Type: application/json
   "destination": ""
 }
 ```
-Returns `{ "url": "...", "prompt": "<LLM-generated music prompt>", "key": "..." }`
+Returns `{ "url": "...", "prompt": "<rule-based music prompt>", "key": "..." }`
 
-Mobile-friendly form: `http://localhost:5000/context-ui`
+Mobile-friendly form: `http://localhost:5000/context-ui` (uses the rule-based engine)
 
 ### 5. Browse the library
 ```
@@ -101,55 +160,6 @@ Current song finishes saving before stopping.
 | `/library` | GET | JSON list of saved songs |
 | `/files/<filename>` | GET | Serve saved audio (range-capable) |
 | `/` | GET | Library player UI |
-
----
-
-## Setup (first time)
-
-### 1. Get API keys
-
-Ask the user which LLM they use for context prompts (MiniMax, Claude, etc.), then guide them to get the required keys:
-
-- **Sonauto** (required) — sign up at **https://sonauto.ai** → copy API key
-- **MiniMax** (optional, preferred for context prompts) — get key from MiniMax
-- **Anthropic** (optional, fallback for context prompts) — get key from Anthropic
-
-### 2. Configure environment
-
-Once the user provides their keys:
-```bash
-cp .env.example .env
-```
-Set the keys in `.env`:
-```
-SONAUTO_API_KEY=<user's key>
-MINIMAX_API_KEY=<user's key, if provided>
-ANTHROPIC_API_KEY=<user's key, if provided>
-```
-
-### 3. Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Start the server
-```bash
-source .env && ./restart_musestream.sh
-# Server at http://localhost:5000
-```
-
-The port is configurable via `MUSESTREAM_PORT`. The agent should pick an available port to avoid conflicts.
-
-### Environment variables
-
-| Variable | Default | Description |
-|---|---|---|
-| `MUSIC_PROVIDER` | `sonauto` | Active provider |
-| `SONAUTO_API_KEY` | — | **Required** — get at https://sonauto.ai |
-| `MUSESTREAM_OUTPUT_DIR` | `~/Music/MuseStream` | Where songs are saved |
-| `MUSESTREAM_PORT` | `5000` | Server port |
-| `MINIMAX_API_KEY` | — | MiniMax for context prompts (preferred) |
-| `ANTHROPIC_API_KEY` | — | Claude Haiku fallback for context prompts |
 
 ---
 
