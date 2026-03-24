@@ -52,10 +52,10 @@ Your agent will configure `.env`, install dependencies, and start the server.
 
 Once the server is up, your agent will confirm with something like:
 
-> Both keys loaded. Server's up on **http://localhost:5000** with MiniMax context prompts enabled. Want me to generate some music?
+> Both keys loaded. Server's up on **http://localhost:5001** with MiniMax context prompts enabled. Want me to generate some music?
 
 > [!NOTE]
-> The port may differ from `5000` — your agent picks an available port to avoid conflicts with other services already running on your machine.
+> The port may differ from `5001` — your agent picks an available port to avoid conflicts with other services already running on your machine.
 
 Try:
 
@@ -64,7 +64,7 @@ Try:
 Your agent will return a player link — click it and enjoy!
 
 > [!TIP]
-> - Browse and listen to all previously generated songs at **http://localhost:5000** (no path suffix needed). Streamed songs are saved to `~/Music/MuseStream` by default.
+> - Browse and listen to all previously generated songs at **http://localhost:5001** (no path suffix needed). Streamed songs are saved to `~/Music/MuseStream` by default.
 > - Never commit API keys to version control.
 > - See **`SKILL.md`** for the full agent endpoint reference.
 
@@ -76,7 +76,7 @@ By default, all player URLs use `localhost` and are only reachable on your machi
 
 Your agent will substitute the host and return a link like:
 ```
-http://203.0.113.42:5000/player?s=abc12345
+http://203.0.113.42:5001/player?s=abc12345
 ```
 
 > [!WARNING]
@@ -84,7 +84,7 @@ http://203.0.113.42:5000/player?s=abc12345
 
 Before exposing externally, at minimum:
 
-- **Firewall** — restrict port 5000 to known IPs ([ufw guide](https://help.ubuntu.com/community/UFW), [iptables](https://wiki.archlinux.org/title/iptables))
+- **Firewall** — restrict port 5001 to known IPs ([ufw guide](https://help.ubuntu.com/community/UFW), [iptables](https://wiki.archlinux.org/title/iptables))
 - **Secret token** — set `MUSESTREAM_TOKEN` in `.env`; ask your agent to require `?token=<secret>` on all requests
 - **Rate limiting** — ask your agent to add [Flask-Limiter](https://flask-limiter.readthedocs.io/) to `/generate` and `/start`
 - **TLS proxy** — put [Caddy](https://caddyserver.com/docs/quick-starts/reverse-proxy) or [nginx](https://nginx.org/en/docs/beginners_guide.html) in front; never expose Flask's dev server directly
@@ -114,7 +114,7 @@ pip install -r requirements.txt
 # or: python3 musestream_server.py
 ```
 
-Server runs on **http://localhost:5000** by default (configurable via `MUSESTREAM_PORT`).
+Server runs on **http://localhost:5001** by default (configurable via `MUSESTREAM_PORT`).
 
 ---
 
@@ -122,22 +122,22 @@ Server runs on **http://localhost:5000** by default (configurable via `MUSESTREA
 
 ### Generate music from a prompt
 ```bash
-curl "http://localhost:5000/start?prompt=upbeat+indie+rock+morning+energy"
-# → {"url": "http://localhost:5000/player?s=abc12345", ...}
+curl "http://localhost:5001/start?prompt=upbeat+indie+rock+morning+energy"
+# → {"url": "http://localhost:5001/player?s=abc12345", ...}
 ```
 Open the returned URL in a browser. Music starts streaming immediately.
 
 ### Generate from context (weather, mood, activity)
 The agent uses its own LLM to interpret context and craft a music prompt, then calls `/start`. A rule-based fallback is also available:
 ```bash
-curl -X POST http://localhost:5000/api/context \
+curl -X POST http://localhost:5001/api/context \
   -H "Content-Type: application/json" \
   -d '{"time": "evening", "weather": "rainy", "mood": "relaxed", "activity": "working"}'
 # → {"url": "...", "prompt": "focused lo-fi calming with soft rain ambiance for evening"}
 ```
 
 ### Browse the library
-Open **http://localhost:5000/** in a browser — prev/next/shuffle player for all saved songs.
+Open **http://localhost:5001/** in a browser — prev/next/shuffle player for all saved songs.
 
 ---
 
@@ -167,7 +167,7 @@ Open **http://localhost:5000/** in a browser — prev/next/shuffle player for al
 | `MUSIC_PROVIDER` | `sonauto` | Active provider |
 | `SONAUTO_API_KEY` | — | **Required** — get at https://sonauto.ai |
 | `MUSESTREAM_OUTPUT_DIR` | `~/Music/MuseStream` | Where songs are saved |
-| `MUSESTREAM_PORT` | `5000` | Server port |
+| `MUSESTREAM_PORT` | `5001` | Server port |
 
 ---
 

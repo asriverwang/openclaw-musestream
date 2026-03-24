@@ -45,8 +45,10 @@ Set the key in `.env`:
 ```
 SONAUTO_API_KEY=<user's key>
 MUSESTREAM_OUTPUT_DIR=<user's preferred path>
+MUSESTREAM_PORT=<user's preferred port>
 ```
 Ask the user where they want generated songs saved. If they don't specify, remind them the default is `~/Music/MuseStream`.
+Ask the user which port to use. If they don't specify, remind them the default is `5001`.
 
 ### 3. Install dependencies
 ```bash
@@ -55,9 +57,11 @@ pip install -r requirements.txt
 
 ### 4. Start the server
 ```bash
-source .env && ./restart_musestream.sh
-# Server at http://localhost:5000
+./restart_musestream.sh
+# Server at http://localhost:5001
 ```
+
+The script automatically loads `.env` before launching the server. No need to `source .env` separately.
 
 The port is configurable via `MUSESTREAM_PORT`. The agent should pick an available port to avoid conflicts.
 
@@ -68,7 +72,7 @@ The port is configurable via `MUSESTREAM_PORT`. The agent should pick an availab
 | `MUSIC_PROVIDER` | `sonauto` | Active provider |
 | `SONAUTO_API_KEY` | — | **Required** — get at https://sonauto.ai |
 | `MUSESTREAM_OUTPUT_DIR` | `~/Music/MuseStream` | Where songs are saved |
-| `MUSESTREAM_PORT` | `5000` | Server port |
+| `MUSESTREAM_PORT` | `5001` | Server port |
 
 ---
 
@@ -76,7 +80,7 @@ The port is configurable via `MUSESTREAM_PORT`. The agent should pick an availab
 
 ### 1. Check if server is running
 ```bash
-curl -s http://localhost:5000/library | python3 -m json.tool | head -5
+curl -s http://localhost:5001/library | python3 -m json.tool | head -5
 ```
 If it returns JSON → server is up. If connection refused → start it:
 ```bash
@@ -85,14 +89,14 @@ source .env && ./restart_musestream.sh
 
 ### 2. Quick test
 ```bash
-curl "http://localhost:5000/start?prompt=upbeat+indie+rock+morning+energy"
+curl "http://localhost:5001/start?prompt=upbeat+indie+rock+morning+energy"
 ```
 
 ### 3. Generate music from a prompt
 ```
-GET http://localhost:5000/start?prompt=<url-encoded description>
+GET http://localhost:5001/start?prompt=<url-encoded description>
 ```
-Returns `{ "url": "http://localhost:5000/player?s=<key>", "key": "...", "prompt": "..." }`
+Returns `{ "url": "http://localhost:5001/player?s=<key>", "key": "...", "prompt": "..." }`
 
 **Important: The agent must interpret and refine the user's prompt before calling `/start`.** The server passes the prompt directly to Sonauto — it does not rewrite it. If the user says something non-musical (e.g., "a rock song about turtles flying", "music for a rainy afternoon"), the agent should use its own LLM to convert it into an effective music generation prompt describing artist, genre, era, mood, energy, usage context, and sonic texture.
 
@@ -114,7 +118,7 @@ Send the `url` to the user. They open it in a browser — music streams automati
 
 **Fallback:** The server provides a rule-based context-to-prompt endpoint:
 ```
-POST http://localhost:5000/api/context
+POST http://localhost:5001/api/context
 Content-Type: application/json
 
 {
@@ -129,17 +133,17 @@ Content-Type: application/json
 ```
 Returns `{ "url": "...", "prompt": "<rule-based music prompt>", "key": "..." }`
 
-Mobile-friendly form: `http://localhost:5000/context-ui` (uses the rule-based engine)
+Mobile-friendly form: `http://localhost:5001/context-ui` (uses the rule-based engine)
 
 ### 5. Browse the library
 ```
-GET http://localhost:5000/library      # JSON list of all saved songs
-GET http://localhost:5000/             # Browser library player
+GET http://localhost:5001/library      # JSON list of all saved songs
+GET http://localhost:5001/             # Browser library player
 ```
 
 ### 6. Stop streaming
 ```
-POST http://localhost:5000/stop
+POST http://localhost:5001/stop
 {"task_ids": ["<task_id>"]}
 ```
 Current song finishes saving before stopping.

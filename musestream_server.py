@@ -12,7 +12,7 @@ Environment variables:
   MUSIC_PROVIDER          — "sonauto" (default) or any registered provider key
   SONAUTO_API_KEY         — API key for Sonauto (https://sonauto.ai)
   MUSESTREAM_OUTPUT_DIR   — Where to save generated songs (default ~/Music/MuseStream)
-  MUSESTREAM_PORT         — Server port (default 5000)
+  MUSESTREAM_PORT         — Server port (default 5001)
 """
 
 import hashlib
@@ -22,7 +22,10 @@ import threading
 import time
 import requests
 from datetime import datetime
+from dotenv import load_dotenv
 from flask import Flask, Response, request, jsonify, stream_with_context
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -68,7 +71,7 @@ OUTPUT_DIR = os.environ.get(
     os.path.expanduser("~/Music/MuseStream")
 )
 LOG_FILE   = os.path.join(OUTPUT_DIR, "log.jsonl")
-PORT       = int(os.environ.get("MUSESTREAM_PORT", 5000))
+PORT       = int(os.environ.get("MUSESTREAM_PORT", 5001))
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -86,12 +89,16 @@ def api_headers():
 def start_generation(prompt):
     """Start a music generation job. Returns task_id."""
     if _PROVIDER_ID == "sonauto":
+        payload = {"prompt": prompt, "enable_streaming": True}
         resp = requests.post(
             _P["generate_url"],
             headers=api_headers(),
-            json={"prompt": prompt, "enable_streaming": True},
+            json=payload,
             timeout=30,
         )
+        if resp.status_code != 200:
+            print(f"Sonauto API error {resp.status_code}: {resp.text}")
+            print(f"  Payload sent: {payload}")
         resp.raise_for_status()
         task_id = resp.json().get("task_id")
         if not task_id:
@@ -192,7 +199,7 @@ def start_session():
         return jsonify({"error": "Missing prompt"}), 400
     key = hashlib.md5((prompt + str(time.time())).encode()).hexdigest()[:8]
     _sessions[key] = prompt
-    url = f"http://localhost:5000/player?s={key}"
+    url = f"http://localhost:{PORT}/player?s={key}"
     return jsonify({"url": url, "key": key, "prompt": prompt})
 
 
@@ -566,7 +573,7 @@ def api_context():
     # Create session
     key = hashlib.md5((prompt + str(time.time())).encode()).hexdigest()[:8]
     _sessions[key] = prompt
-    url = f"http://localhost:5000/player?s={key}"
+    url = f"http://localhost:{PORT}/player?s={key}"
 
     print(f"Context session {key}: {prompt}")
     return jsonify({"url": url, "prompt": prompt, "key": key})
