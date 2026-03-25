@@ -1,4 +1,5 @@
-# Environment — never commit API keys
+# Config — never commit API keys
+config.json
 .env
 
 # Python

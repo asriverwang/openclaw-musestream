@@ -22,10 +22,19 @@ import threading
 import time
 import requests
 from datetime import datetime
-from dotenv import load_dotenv
 from flask import Flask, Response, request, jsonify, stream_with_context
 
-load_dotenv()
+# ── Load config.json ──────────────────────────────────────────────────────────
+_CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+if os.path.exists(_CONFIG_PATH):
+    with open(_CONFIG_PATH) as _f:
+        _cfg = json.load(_f)
+else:
+    _cfg = {}
+
+def _conf(key, default=""):
+    """Read from config.json, fall back to env var, then default."""
+    return _cfg.get(key, os.environ.get(key, default))
 
 app = Flask(__name__)
 
@@ -59,19 +68,18 @@ PROVIDERS = {
     # },
 }
 
-_PROVIDER_ID = os.environ.get("MUSIC_PROVIDER", "sonauto")
+_PROVIDER_ID = _conf("MUSIC_PROVIDER", "sonauto")
 if _PROVIDER_ID not in PROVIDERS:
     raise ValueError(f"Unknown MUSIC_PROVIDER '{_PROVIDER_ID}'. Available: {list(PROVIDERS)}")
 
 _P       = PROVIDERS[_PROVIDER_ID]
-API_KEY  = os.environ.get(_P["key_env"], "")
+API_KEY  = _conf(_P["key_env"])
 
-OUTPUT_DIR = os.environ.get(
-    "MUSESTREAM_OUTPUT_DIR",
-    os.path.expanduser("~/Music/MuseStream")
-)
+OUTPUT_DIR = _conf("MUSESTREAM_OUTPUT_DIR", os.path.expanduser("~/Music/MuseStream"))
+if OUTPUT_DIR.startswith("~"):
+    OUTPUT_DIR = os.path.expanduser(OUTPUT_DIR)
 LOG_FILE   = os.path.join(OUTPUT_DIR, "log.jsonl")
-PORT       = int(os.environ.get("MUSESTREAM_PORT", 5001))
+PORT       = int(_conf("MUSESTREAM_PORT", 5001))
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 

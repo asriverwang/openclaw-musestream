@@ -39,13 +39,16 @@ Guide the user to sign up at **https://sonauto.ai** and copy their API key.
 
 Once the user provides their key:
 ```bash
-cp .env.example .env
+cp config.example.json config.json
 ```
-Set the key in `.env`:
-```
-SONAUTO_API_KEY=<user's key>
-MUSESTREAM_OUTPUT_DIR=<user's preferred path>
-MUSESTREAM_PORT=<user's preferred port>
+Set the values in `config.json`:
+```json
+{
+  "SONAUTO_API_KEY": "<user's key>",
+  "MUSIC_PROVIDER": "sonauto",
+  "MUSESTREAM_OUTPUT_DIR": "<user's preferred path>",
+  "MUSESTREAM_PORT": <user's preferred port>
+}
 ```
 Ask the user where they want generated songs saved. If they don't specify, remind them the default is `~/Music/MuseStream`.
 Ask the user which port to use. If they don't specify, remind them the default is `5001`.
@@ -61,7 +64,7 @@ pip install -r requirements.txt
 # Server at http://localhost:5001
 ```
 
-The script automatically loads `.env` before launching the server. No need to `source .env` separately.
+The server loads `config.json` automatically at startup.
 
 The port is configurable via `MUSESTREAM_PORT`. The agent should pick an available port to avoid conflicts.
 
@@ -84,7 +87,7 @@ curl -s http://localhost:5001/library | python3 -m json.tool | head -5
 ```
 If it returns JSON → server is up. If connection refused → start it:
 ```bash
-source .env && ./restart_musestream.sh
+./restart_musestream.sh
 ```
 
 ### 2. Quick test

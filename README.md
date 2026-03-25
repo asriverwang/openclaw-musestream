@@ -32,23 +32,11 @@ If you have an OpenClaw Agent, it can set up and run MuseStream for you end-to-e
 git clone <repo-url> ~/.openclaw/skills/
 ```
 
-**2. Have your agent read the docs**
+**2. Follow SKILL.md to build the skill**
 
-> Read ~/.openclaw/workspace/openclaw-musestream/\*.md
+> Read ~/.openclaw/skills/openclaw-musestream/SKILL.md
 
-**3. Ask your agent to build the service**
-
-> I'd like to build the MuseStream service. Tell me how to get the Sonauto API key.
-
-Your agent will guide you through obtaining the Sonauto API key.
-
-**4. Give your agent the key**
-
-> My Sonauto API key: xxxxxxx
-
-Your agent will configure `.env`, install dependencies, and start the server.
-
-**5. Generate music**
+**3. Generate music**
 
 Once the server is up, your agent will confirm with something like:
 
@@ -68,7 +56,7 @@ Your agent will return a player link — click it and enjoy!
 > - Never commit API keys to version control.
 > - See **`SKILL.md`** for the full agent endpoint reference.
 
-**6. Share a player URL externally**
+**4. Share a player URL externally**
 
 By default, all player URLs use `localhost` and are only reachable on your machine. To send a link someone else can open, ask your agent:
 
@@ -85,7 +73,7 @@ http://203.0.113.42:5001/player?s=abc12345
 Before exposing externally, at minimum:
 
 - **Firewall** — restrict port 5001 to known IPs ([ufw guide](https://help.ubuntu.com/community/UFW), [iptables](https://wiki.archlinux.org/title/iptables))
-- **Secret token** — set `MUSESTREAM_TOKEN` in `.env`; ask your agent to require `?token=<secret>` on all requests
+- **Secret token** — set `MUSESTREAM_TOKEN`; ask your agent to require `?token=<secret>` on all requests
 - **Rate limiting** — ask your agent to add [Flask-Limiter](https://flask-limiter.readthedocs.io/) to `/generate` and `/start`
 - **TLS proxy** — put [Caddy](https://caddyserver.com/docs/quick-starts/reverse-proxy) or [nginx](https://nginx.org/en/docs/beginners_guide.html) in front; never expose Flask's dev server directly
 - **Avoid public/shared networks** without the above in place
@@ -99,8 +87,8 @@ Register at **https://sonauto.ai** and copy your API key.
 
 ### 2. Configure
 ```bash
-cp .env.example .env
-# Set at minimum: SONAUTO_API_KEY=your_key
+cp config.example.json config.json
+# Edit config.json — set at minimum: "SONAUTO_API_KEY": "your_key"
 ```
 
 ### 3. Install dependencies
@@ -157,17 +145,6 @@ Open **http://localhost:5001/** in a browser — prev/next/shuffle player for al
 | `/library` | GET | JSON list of saved songs |
 | `/files/<filename>` | GET | Serve saved audio (seekable) |
 | `/` | GET | Library player UI |
-
----
-
-## Environment Variables
-
-| Variable | Default | Description |
-|---|---|---|
-| `MUSIC_PROVIDER` | `sonauto` | Active provider |
-| `SONAUTO_API_KEY` | — | **Required** — get at https://sonauto.ai |
-| `MUSESTREAM_OUTPUT_DIR` | `~/Music/MuseStream` | Where songs are saved |
-| `MUSESTREAM_PORT` | `5001` | Server port |
 
 ---
 
