@@ -51,7 +51,7 @@ Set the values in `config.json`:
 }
 ```
 Ask the user where they want generated songs saved. If they don't specify, remind them the default is `~/Music/MuseStream`.
-Ask the user which port to use. If they don't specify, remind them the default is `5001`.
+Ask the user which port to use. If they don't specify, remind them the default is `5001`. The agent should pick an available port to avoid conflicts.
 
 ### 3. Install dependencies
 ```bash
@@ -65,17 +65,6 @@ pip install -r requirements.txt
 ```
 
 The server loads `config.json` automatically at startup.
-
-The port is configurable via `MUSESTREAM_PORT`. The agent should pick an available port to avoid conflicts.
-
-### Environment variables
-
-| Variable | Default | Description |
-|---|---|---|
-| `MUSIC_PROVIDER` | `sonauto` | Active provider |
-| `SONAUTO_API_KEY` | — | **Required** — get at https://sonauto.ai |
-| `MUSESTREAM_OUTPUT_DIR` | `~/Music/MuseStream` | Where songs are saved |
-| `MUSESTREAM_PORT` | `5001` | Server port |
 
 ---
 
@@ -190,4 +179,4 @@ Add an entry to `PROVIDERS` in `musestream_server.py`:
 },
 ```
 Add a branch in `start_generation()` for the provider's payload format.
-Set `MUSIC_PROVIDER=myprovider` and restart.
+Set `"MUSIC_PROVIDER": "MyProvider"` and `"MYPROVIDER_API_KEY": "<your_key>"` in config.json and restart.
